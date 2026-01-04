@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  spottyhue:
+    build: .
+    container_name: spottyhue
+    ports:
+      - "5001:5001"
+    environment:
+      # Hue Bridge Configuration
+      - HUE_BRIDGE_IP=${HUE_BRIDGE_IP}
+      - HUE_USERNAME=${HUE_USERNAME}
+
+      # Spotify API Credentials
+      - SPOTIFY_CLIENT_ID=${SPOTIFY_CLIENT_ID}
+      - SPOTIFY_CLIENT_SECRET=${SPOTIFY_CLIENT_SECRET}
+      - SPOTIFY_REDIRECT_URI=${SPOTIFY_REDIRECT_URI:-http://127.0.0.1:8888/callback}
+
+      # Default Configuration
+      - HUE_LIGHT_IDS=${HUE_LIGHT_IDS:-11,12,13}
+      - NUM_COLORS=${NUM_COLORS:-3}
+      - UPDATE_INTERVAL=${UPDATE_INTERVAL:-2}
+      - BRIGHTNESS=${BRIGHTNESS:-254}
+
+      # Production Security Settings
+      - FLASK_ENV=production
+      - FLASK_DEBUG=False
+      - SECRET_KEY=${SECRET_KEY:-please-change-this-to-a-random-secret}
+      - SESSION_COOKIE_SECURE=${SESSION_COOKIE_SECURE:-False}
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost:5001}
+      - BEHIND_PROXY=${BEHIND_PROXY:-False}
+
+    restart: unless-stopped
+    networks:
+      - spottyhue-network
+
+    volumes:
+      # Persist Spotify cache
+      - ./.spotify_cache:/app/.spotify_cache
+
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5001/api/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+networks:
+  spottyhue-network:
+    driver: bridge
