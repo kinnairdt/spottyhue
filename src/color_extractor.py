@@ -3,6 +3,7 @@ Color Extractor
 Extracts dominant colors from album artwork images.
 """
 
+import os
 import requests
 from io import BytesIO
 from PIL import Image
@@ -26,6 +27,7 @@ class ColorExtractor:
         Returns:
             List of RGB tuples
         """
+        tmp_path = None
         try:
             # Download image
             response = requests.get(image_url, timeout=10)
@@ -52,6 +54,12 @@ class ColorExtractor:
             print(f"Error extracting colors: {e}")
             # Return default colors if extraction fails
             return [(255, 0, 0), (0, 255, 0), (0, 0, 255)][:num_colors]
+        finally:
+            if tmp_path:
+                try:
+                    os.unlink(tmp_path)
+                except OSError:
+                    pass
 
     @staticmethod
     def extract_colors_advanced(image_url: str, num_colors: int = 3) -> List[Tuple[int, int, int]]:

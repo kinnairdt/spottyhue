@@ -68,6 +68,8 @@ class SyncManager:
         self.spotify_client: Optional[SpotifyClient] = None
         self.hue_controller: Optional[HueController] = None
         self.spottyhue_app: Optional[SpottyHue] = None
+        self.no_playback_timeout = int(os.getenv('NO_PLAYBACK_TIMEOUT', '1800'))
+        self.last_playing_time: Optional[float] = None
         
         self.current_config = {
             'light_ids': [int(x) for x in os.getenv('HUE_LIGHT_IDS', '11,12,13').split(',')],
@@ -125,6 +127,7 @@ class SyncManager:
 
         try:
             self.get_spottyhue_app() # Ensure app is ready
+            self.last_playing_time = time.monotonic()
             self.active = True
             self.thread = threading.Thread(target=self._sync_loop, daemon=True)
             self.thread.start()
@@ -141,6 +144,7 @@ class SyncManager:
         
         self.active = False
         self.current_track_info = None
+        self.last_playing_time = None
         logger.info("Sync stopped")
         return True, "Sync stopped"
 
@@ -157,13 +161,27 @@ class SyncManager:
                 
                 track = self.spotify_client.get_current_track()
 
-                if track and track['id'] != current_track_id:
-                    current_track_id = track['id']
-                    self.current_track_info = track
-                    
-                    # This now handles color extraction, state update, and light update internally
-                    app_instance.sync_colors_to_lights(track)
-                    logger.info(f"Synced: {track['name']}")
+                if track:
+                    self.last_playing_time = time.monotonic()
+
+                    if track['id'] != current_track_id:
+                        current_track_id = track['id']
+                        self.current_track_info = track
+                        
+                        # This now handles color extraction, state update, and light update internally
+                        app_instance.sync_colors_to_lights(track)
+                        logger.info(f"Synced: {track['name']}")
+                else:
+                    if self.current_track_info is not None:
+                        self.current_track_info = None
+
+                    if self.last_playing_time is None:
+                        self.last_playing_time = time.monotonic()
+
+                    if time.monotonic() - self.last_playing_time >= self.no_playback_timeout:
+                        logger.info("No Spotify playback detected; stopping sync.")
+                        self.stop_sync()
+                        break
 
                 time.sleep(self.current_config['update_interval'])
 
