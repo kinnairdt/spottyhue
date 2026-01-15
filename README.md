@@ -79,6 +79,23 @@ The easiest way to run SpottyHue is using Docker Compose.
 4. **Access the UI:**
    Open **http://localhost:5001** in your browser.
 
+## 🌐 Reverse Proxy / Subpath Deployments
+
+If you run SpottyHue behind a reverse proxy (e.g., under `/spottyhue/`), set
+the base path and proxy headers so the UI and API routes resolve correctly.
+
+**Environment variables:**
+```env
+PORTAL_BASE_PATH=spottyhue
+BEHIND_PROXY=True
+ALLOWED_ORIGINS=http://localhost:5001
+```
+
+**Notes:**
+- `PORTAL_BASE_PATH` should be the path segment without leading/trailing slashes.
+- `BEHIND_PROXY=True` enables trusted proxy headers.
+- Add your public domain to `ALLOWED_ORIGINS` in your own `.env` (not committed).
+
 ## 📱 Using the App
 
 1. **Start Syncing:** Click the large Play button on the album art.
