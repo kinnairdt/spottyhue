@@ -1,5 +1,8 @@
 // SpottyHue Minimalist App Logic
 
+const basePath = (window.__BASE_PATH__ || '').replace(/\/$/, '');
+const API_BASE = `${basePath}/api`;
+
 // State
 let state = {
     active: false,
@@ -40,7 +43,7 @@ async function init() {
 // API Interactions
 async function loadStatus() {
     try {
-        const res = await fetch('/api/status');
+        const res = await fetch(`${API_BASE}/status`);
         const data = await res.json();
         
         state.active = data.active;
@@ -61,7 +64,7 @@ async function loadStatus() {
 
 async function loadLights() {
     try {
-        const res = await fetch('/api/lights');
+        const res = await fetch(`${API_BASE}/lights`);
         state.lights = await res.json();
         // Sort: color capable first
         state.lights.sort((a, b) => (b.color_capable - a.color_capable));
@@ -73,7 +76,7 @@ async function loadLights() {
 
 async function loadGroups() {
     try {
-        const res = await fetch('/api/groups');
+        const res = await fetch(`${API_BASE}/groups`);
         state.groups = await res.json();
         renderLightList();
     } catch (e) {
@@ -82,7 +85,7 @@ async function loadGroups() {
 }
 
 async function toggleSync() {
-    const endpoint = state.active ? '/api/stop' : '/api/start';
+    const endpoint = state.active ? `${API_BASE}/stop` : `${API_BASE}/start`;
     
     // Optimistic UI update
     state.active = !state.active;
@@ -124,7 +127,7 @@ async function updateConfig() {
     document.getElementById('interval-val').textContent = interval + 's';
 
     try {
-        await fetch('/api/config', {
+        await fetch(`${API_BASE}/config`, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({
@@ -146,7 +149,7 @@ async function testConnection() {
     btn.disabled = true;
 
     try {
-        const res = await fetch('/api/test-connection');
+        const res = await fetch(`${API_BASE}/test-connection`);
         const data = await res.json();
         const msg = `Spotify: ${data.spotify ? 'OK' : 'Fail'}\nHue: ${data.hue ? 'OK' : 'Fail'}`;
         alert(msg);

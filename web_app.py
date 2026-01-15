@@ -39,6 +39,17 @@ app.config['PERMANENT_SESSION_LIFETIME'] = 3600  # 1 hour
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max request size
 app.config['JSON_SORT_KEYS'] = False
 
+# Portal base path for reverse proxy routing (e.g., "/spottyhue")
+def normalize_base_path(value: Optional[str]) -> str:
+    if not value:
+        return ''
+    trimmed = value.strip()
+    if not trimmed:
+        return ''
+    return '/' + trimmed.strip('/')
+
+BASE_PATH = normalize_base_path(os.getenv('PORTAL_BASE_PATH', ''))
+
 # Disable debug mode in production
 DEBUG_MODE = os.getenv('FLASK_DEBUG', 'False').lower() == 'true'
 
@@ -235,7 +246,7 @@ def set_security_headers(response):
 @app.route('/')
 def index():
     """Serve the main web interface."""
-    return render_template('index.html')
+    return render_template('index.html', base_path=BASE_PATH)
 
 
 @app.route('/api/status')

@@ -28,7 +28,8 @@ services:
       - SECRET_KEY=${SECRET_KEY:-please-change-this-to-a-random-secret}
       - SESSION_COOKIE_SECURE=${SESSION_COOKIE_SECURE:-False}
       - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost:5001}
-      - BEHIND_PROXY=${BEHIND_PROXY:-False}
+      - BEHIND_PROXY=${BEHIND_PROXY:-True}
+      - PORTAL_BASE_PATH=spottyhue
 
     restart: unless-stopped
     networks:
@@ -44,6 +45,11 @@ services:
       timeout: 10s
       retries: 3
       start_period: 10s
+    labels:
+      - portal.enable=true
+      - portal.path=spottyhue
+      - portal.port=5001
+      - portal.name=SpottyHue
 
 networks:
   spottyhue-network:
